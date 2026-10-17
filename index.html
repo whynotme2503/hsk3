@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSK 一级标准在线模拟考试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; font-size: 1.125rem; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen pb-28">
+
+    <!-- ================= WELCOME SCREEN ================= -->
+    <div id="welcome-screen" class="fixed inset-0 bg-slate-900/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 text-center space-y-6 border border-slate-100">
+            <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-3xl font-black">
+                HSK 1
+            </div>
+            <div>
+                <h2 class="text-3xl font-black text-slate-900">HSK 一级标准模拟考试</h2>
+                <p class="text-slate-600 text-base mt-2 font-normal">请输入您的姓名开始计时考试 (时长：40分钟 / 共40题)</p>
+            </div>
+            <div class="space-y-3 text-left">
+                <label class="block text-base font-bold text-slate-700">考生姓名 / Họ tên học viên:</label>
+                <input type="text" id="student-name" placeholder="例如：Nguyen Van A" class="w-full px-5 py-4 rounded-2xl border-2 border-slate-300 focus:border-indigo-600 focus:outline-none text-lg font-medium">
+                <p id="name-error" class="text-rose-500 text-sm hidden font-semibold">请输入您的姓名才能开始考试！</p>
+            </div>
+            <button type="button" onclick="startExam()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg transition duration-200 text-xl cursor-pointer">
+                开始考试 (Bắt đầu làm bài)
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= EXAM INTERFACE ================= -->
+    <div id="exam-screen" class="hidden">
+        
+        <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-md py-4 px-4 mb-8">
+            <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-xl font-black text-slate-900 flex items-center gap-3">
+                        <span>HSK 1 模拟试卷 (40题 / 200分)</span>
+                        <span id="display-name" class="text-sm bg-indigo-50 text-indigo-700 px-3 py-1 rounded-lg border border-indigo-200 font-bold"></span>
+                    </h1>
+                    <p class="text-sm text-slate-500 mt-0.5 font-normal">听力与阅读标准化考试平台</p>
+                </div>
+                
+                <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                    <div id="timer-box" class="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-2.5 rounded-2xl font-mono font-bold text-base flex items-center gap-2 shadow-sm">
+                        <span>⏱️ 剩余:</span>
+                        <span id="time-left">40:00</span>
+                    </div>
+                    <div class="w-48 sm:w-64">
+                        <audio controls class="w-full h-10 rounded-xl">
+                            <source src="01.mp3" type="audio/mpeg">
+                            您的浏览器不支持音频播放。
+                        </audio>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- SCORE BANNER -->
+        <div id="score-banner" class="hidden max-w-4xl mx-auto px-4 mb-8">
+            <div class="bg-emerald-600 text-white rounded-3xl p-6 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 border-2 border-emerald-400">
+                <div class="space-y-1 text-center sm:text-left">
+                    <h3 class="text-2xl font-black">🎉 考试成绩已公布 (Đã chấm điểm thành công)</h3>
+                    <p id="banner-student" class="text-emerald-100 text-lg font-medium"></p>
+                </div>
+                <div class="flex items-center gap-4 bg-emerald-700/80 px-6 py-3 rounded-2xl border border-emerald-500">
+                    <div class="text-center">
+                        <p class="text-xs text-emerald-200 font-bold uppercase">正确题数</p>
+                        <p id="banner-correct" class="text-2xl font-black">0 / 40</p>
+                    </div>
+                    <div class="w-px h-10 bg-emerald-500"></div>
+                    <div class="text-center">
+                        <p class="text-xs text-emerald-200 font-bold uppercase">总分</p>
+                        <p id="banner-score" class="text-2xl font-black text-amber-300">0 / 200</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <main class="max-w-4xl mx-auto px-4 space-y-10">
+
+            <!-- ================= LISTENING ================= -->
+            <section class="space-y-8">
+                <div class="border-b-4 border-indigo-600 pb-3">
+                    <h2 class="text-3xl font-black text-indigo-900">第一部分：听力 (第一到二十题)</h2>
+                    <p class="text-base text-slate-600 mt-1 font-normal">认真聆听音频 (01.mp3) 完成各部分听力试题。</p>
+                </div>
+
+                <!-- Q1 - Q5 -->
+                <div class="bg-white rounded-3xl p-8 shadow-md border-2 border-slate-200 space-y-6">
+                    <h3 class="text-2xl font-bold text-slate-900">第一到五题：听对话，选择与对话内容相符的图片 (看图配对)</h3>
+                    <div class="my-4">
+                        <img src="1-5.png" alt="第 1-5 题配图" class="w-full max-h-[450px] object-contain rounded-2xl border-2 border-slate-200 bg-slate-50 p-3" onerror="this.src='https://placehold.co/800x450/f1f5f9/475569?text=Image+1-5.png'">
+                    </div>
+                    <div class="space-y-5 pt-2">
+                        <script>
+                            for(let i=1; i<=5; i++) {
+                                document.write(`
+                                    <div id="q-container-${i}" class="p-5 bg-slate-50 border-2 border-slate-200 rounded-2xl flex flex-wrap items-center justify-between gap-4 transition-all">
+                                        <span class="text-slate-900 text-xl font-black">${i}.</span>
+                                        <div class="flex gap-3 flex-wrap">
+                                            ${['A','B','C','D','E','F'].map(char => `
+                                                <label class="flex items-center justify-center px-5 py-3 bg-white border-2 border-slate-300 rounded-2xl cursor-pointer hover:bg-indigo-50 hover:border-indigo-500 transition shadow-sm min-w-[60px]">
+                                                    <input type="radio" name="q${i}" value="${char}" class="mr-2 w-5 h-5 text-indigo-600">
+                                                    <span class="text-slate-800 text-lg font-bold">${char}</span>
+                                                </label>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `);
+                            }
+                        </script>
+                    </div>
+                </div>
+
+                <!-- Q6 - Q10 -->
+                <div class="bg-white rounded-3xl p-8 shadow-md border-2 border-slate-200 space-y-6">
+                    <h3 class="text-2xl font-bold text-slate-900">第六到十题：听句子，判断对错 (True / False)</h3>
+                    <div class="space-y-4">
+                        <script>
+                            const q6_10_texts = [
+                                "6. 他不太喜欢看那部电影。",
+                                "7. 他现在一点也不着急。",
+                                "8. 这次考试他考得很理想。",
+                                "9. 他还没有想好去哪儿旅游。",
+                                "10. 家里冰箱里还有很多鸡蛋。"
+                            ];
+                            q6_10_texts.forEach((txt, idx) => {
+                                let qNum = 6 + idx;
+                                document.write(`
+                                    <div id="q-container-${qNum}" class="p-5 bg-slate-50 border-2 border-slate-200 rounded-2xl flex flex-wrap items-center justify-between gap-4 transition-all">
+                                        <span class="text-slate-900 text-lg font-medium">${txt}</span>
+                                        <div class="flex gap-4">
+                                            <label class="flex items-center px-5 py-3 bg-white border-2 border-slate-300 rounded-2xl cursor-pointer hover:bg-indigo-50 transition shadow-sm text-emerald-600 text-lg font-bold">
+                                                <input type="radio" name="q${qNum}" value="T" class="mr-2 w-5 h-5 text-indigo-600"> √ (Đúng)
+                                            </label>
+                                            <label class="flex items-center px-5 py-3 bg-white border-2 border-slate-300 rounded-2xl cursor-pointer hover:bg-rose-50 transition shadow-sm text-rose-600 text-lg font-bold">
+                                                <input type="radio" name="q${qNum}" value="F" class="mr-2 w-5 h-5 text-rose-600"> × (Sai)
+                                            </label>
+                                        </div>
+                                    </div>
+                                `);
+                            });
+                        </script>
+                    </div>
+                </div>
+
+                <!-- Q11 - Q15 -->
+                <div class="bg-white rounded-3xl p-8 shadow-md border-2 border-slate-200 space-y-6">
+                    <h3 class="text-2xl font-bold text-slate-900">第十一到十五题：听短对话，选择正确答案 (A, B, C)</h3>
+                    <div class="space-y-5">
+                        <script>
+                            const q11_15 = [
+                                {n: 11, opts: ["A. 送朋友", "B. 送衣服", "C. 去外边"]},
+                                {n: 12, opts: ["A. 去过一次南方", "B. 上个月去了南方", "C. 很想去南方"]},
+                                {n: 13, opts: ["A. 买东西", "B. 搬东西", "C. 找儿子"]},
+                                {n: 14, opts: ["A. 票卖完了", "B. 没有好看的电影", "C. 没带钱"]},
+                                {n: 15, opts: ["A. 他带地图了", "B. 他没带地图", "C. 他知道这是哪儿"]}
+                            ];
+                            q11_15.forEach(item => {
+                                document.write(`
+                                    <div id="q-container-${item.n}" class="p-6 bg-slate-50 border-2 border-slate-200 rounded-2xl space-y-3 transition-all">
+                                        <p class="text-slate-900 text-xl font-black">${item.n}.</p>
+                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            ${item.opts.map((opt, idx) => `
+                                                <label class="flex items-center p-4 rounded-2xl border-2 border-slate-300 bg-white hover:bg-indigo-50 cursor-pointer transition shadow-sm">
+                                                    <input type="radio" name="q${item.n}" value="${String.fromCharCode(65+idx)}" class="w-5 h-5 text-indigo-600">
+                                                    <span class="ml-3 text-slate-800 text-lg font-medium">${opt}</span>
+                                                </label>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `);
+                            });
+                        </script>
+                    </div>
+                </div>
+
+                <!-- Q16 - Q20 -->
+                <div class="bg-white rounded-3xl p-8 shadow-md border-2 border-slate-200 space-y-6">
+                    <h3 class="text-2xl font-bold text-slate-900">第十六到二十题：听长对话，选择正确答案 (A, B, C)</h3>
+                    <div class="space-y-5">
+                        <script>
+                            const q16_20 = [
+                                {n: 16, opts: ["A. 公司南边", "B. 医院北边", "C. 医院北门"]},
+                                {n: 17, opts: ["A. 谢谢", "B. 漂亮", "C. 还没有名字"]},
+                                {n: 18, opts: ["A. 没去过那个饭馆", "B. 晚上没有时间", "C. 要请男的吃饭"]},
+                                {n: 19, opts: ["A. 考得不好", "B. 没带手表", "C. 还没复习"]},
+                                {n: 20, opts: ["A. 爱买书", "B. 爱看书", "C. 读了一本书"]}
+                            ];
+                            q16_20.forEach(item => {
+                                document.write(`
+                                    <div id="q-container-${item.n}" class="p-6 bg-slate-50 border-2 border-slate-200 rounded-2xl space-y-3 transition-all">
+                                        <p class="text-slate-900 text-xl font-black">${item.n}.</p>
+                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            ${item.opts.map((opt, idx) => `
+                                                <label class="flex items-center p-4 rounded-2xl border-2 border-slate-300 bg-white hover:bg-indigo-50 cursor-pointer transition shadow-sm">
+                                                    <input type="radio" name="q${item.n}" value="${String.fromCharCode(65+idx)}" class="w-5 h-5 text-indigo-600">
+                                                    <span class="ml-3 text-slate-800 text-lg font-medium">${opt}</span>
+                                                </label>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `);
+                            });
+                        </script>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= READING ================= -->
+            <section class="space-y-8 pt-6">
+                <div class="border-b-4 border-emerald-600 pb-3">
+                    <h2 class="text-3xl font-black text-emerald-900">第二部分：阅读 (第二十一到四十题)</h2>
+                    <p class="text-base text-slate-600 mt-1 font-normal">仔细阅读各项试题并做出正确选择。</p>
+                </div>
+
+                <!-- Q21 - Q25 -->
+                <div class="bg-white rounded-3xl p-8 shadow-md border-2 border-slate-200 space-y-6">
+                    <h3 class="text-2xl font-bold text-slate-900">第二十一到二十五题：句子匹配 (选择 A-F)</h3>
+                    <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-5 text-base text-emerald-950 space-y-1.5 font-medium">
+                        <p><strong>A.</strong> 不是，我一直在这家医院工作。</p>
+                        <p><strong>B.</strong> 不对，周老师现在不在。</p>
+                        <p><strong>C.</strong> 今天学校里一个人都没有，大家都去哪儿了？</p>
+                        <p><strong>D.</strong> 周末有时间吗？我打算请你吃个饭。</p>
+                        <p><strong>E.</strong> 当然。我们先坐公共汽车，然后换地铁。</p>
+                        <p><strong>F.</strong> 可能是工作太累，生病了。</p>
+                    </div>
+                    <div class="space-y-4 pt-2">
+                        <script>
+                            const q21_25 = [
+                                "21. 你怎么了？今天一点儿东西都没吃。",
+                                "22. 今天是周末，你去学校做什么？",
+                                "23. 好啊，哪天？",
+                                "24. 你是新来的医生吗？",
+                                "25. 那我明天再来吧，谢谢。"
+                            ];
+                            q21_25.forEach((txt, idx) => {
+                                let qNum = 21 + idx;
+                                document.write(`
+                                    <div id="q-container-${qNum}" class="p-6 bg-slate-50 border-2 border-slate-200 rounded-2xl space-y-4 transition-all">
+                                        <span class="text-slate-900 text-xl font-bold block">${txt}</span>
+                                        <div class="flex flex-wrap gap-3">
+                                            ${['A','B','C','D','E','F'].map(char => `
+                                                <label class="flex items-center justify-center px-5 py-3 bg-white border-2 border-slate-300 rounded-2xl cursor-pointer hover:bg-emerald-50 hover:border-emerald-500 transition shadow-sm flex-1 min-w-[60px]">
+                                                    <input type="radio" name="q${qNum}" value="${char}" class="mr-2 w-5 h-5 text-emerald-600">
+                                                    <span class="text-slate-800 text-xl font-bold">${char}</span>
+                                                </label>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `);
+                            });
+                        </script>
+                    </div>
+                </div>
+
+                <!-- Q26 - Q30 -->
+                <div class="bg-white rounded-3xl p-8 shadow-md border-2 border-slate-200 space-y-6">
+                    <h3 class="text-2xl font-bold text-slate-900">第二十六到三十题：选词填空 (Word Bank A-F)</h3>
+                    <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-5 flex flex-wrap gap-6 text-lg text-emerald-950 font-bold">
+                        <span>A. 一直</span><span>B. 周末</span><span>C. 带</span><span>D. 搬</span><span>E. 声音</span><span>F. 面包</span>
+                    </div>
+                    <div class="space-y-4 pt-2">
+                        <script>
+                            const q26_30 = [
+                                "26. 这几年我（ &nbsp;&nbsp;&nbsp; ）忙工作，没时间去旅游。",
+                                "27. 你（ &nbsp;&nbsp;&nbsp; ）家的时候，我来帮你吧。",
+                                "28. 这个（ &nbsp;&nbsp;&nbsp; ）很不错，是你买的吗？",
+                                "29. A：这件新衣服是什么时候买的？<br>B：上（ &nbsp;&nbsp;&nbsp; ），我妹妹跟我一起去买的。",
+                                "30. A：现在北方很冷，多（ &nbsp;&nbsp;&nbsp; ）几件衣服吧。<br>B：我已经准备好了。"
+                            ];
+                            q26_30.forEach((txt, idx) => {
+                                let qNum = 26 + idx;
+                                document.write(`
+                                    <div id="q-container-${qNum}" class="p-6 bg-slate-50 border-2 border-slate-200 rounded-2xl space-y-4 transition-all">
+                                        <span class="text-slate-900 text-xl font-bold block leading-relaxed">${txt}</span>
+                                        <div class="flex flex-wrap gap-3">
+                                            ${['A','B','C','D','E','F'].map(char => `
+                                                <label class="flex items-center justify-center px-5 py-3 bg-white border-2 border-slate-300 rounded-2xl cursor-pointer hover:bg-emerald-50 hover:border-emerald-500 transition shadow-sm flex-1 min-w-[60px]">
+                                                    <input type="radio" name="q${qNum}" value="${char}" class="mr-2 w-5 h-5 text-emerald-600">
+                                                    <span class="text-slate-800 text-xl font-bold">${char}</span>
+                                                </label>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `);
+                            });
+                        </script>
+                    </div>
+                </div>
+
+                <!-- Q31 - Q35 -->
+                <div class="bg-white rounded-3xl p-8 shadow-md border-2 border-slate-200 space-y-6">
+                    <h3 class="text-2xl font-bold text-slate-900">第三十一到三十五题：阅读理解，选择正确答案 (A, B, C)</h3>
+                    <div class="space-y-5">
+                        <script>
+                            const q31_35 = [
+                                {
+                                    n: 31,
+                                    text: "妈妈是个北方人，20岁的时候跟爸爸一起搬到南方住，一直住到今天。<br>南方话她现在能听懂一点儿，但是一点儿也不会说。<br><span class='text-base text-slate-600 font-medium'>问：妈妈：</span>",
+                                    opts: ["A. 不是南方人", "B. 会说南方话", "C. 今天搬到南方"]
+                                },
+                                {
+                                    n: 32,
+                                    text: "我们小时候，下了课都在外边玩儿游戏，那时候的游戏是运动。<br>现在的孩子也玩儿游戏，他们在家里，坐在电脑桌前，玩儿的是电脑游戏。<br><span class='text-base text-slate-600 font-medium'>问：现在的孩子们喜欢：</span>",
+                                    opts: ["A. 运动", "B. 玩儿电脑游戏", "C. 在外边玩儿游戏"]
+                                },
+                                {
+                                    n: 33,
+                                    text: "中国人说：做事的时候别着急，要多想想，想好了再做。<br><span class='text-base text-slate-600 font-medium'>问：中国人觉得做事不能：</span>",
+                                    opts: ["A. 着急", "B. 想好", "C. 多想"]
+                                },
+                                {
+                                    n: 34,
+                                    text: "我爱旅游，喜欢走南闯北。<br>第一次去旅游，我买最便宜的火车票，因为那时候没有那么多钱。<br>现在，我可以开车去想去的地方，车上有电子地图，能告诉我怎么走。<br><span class='text-base text-slate-600 font-medium'>问：我现在：</span>",
+                                    opts: ["A. 没有那么多钱", "B. 喜欢坐火车", "C. 可以开车旅游"]
+                                },
+                                {
+                                    n: 35,
+                                    text: "南方我去过很多次，但是妻子一次也没有去过。<br>我说过很多次“明年带你去”，但是因为工作忙，到现在也没带她去，我觉得很对不起妻子。<br><span class='text-base text-slate-600 font-medium'>问：妻子：</span>",
+                                    opts: ["A. 工作很忙", "B. 没去过南方", "C. 觉得很对不起"]
+                                }
+                            ];
+                            q31_35.forEach(item => {
+                                document.write(`
+                                    <div id="q-container-${item.n}" class="p-6 bg-slate-50 border-2 border-slate-200 rounded-2xl space-y-4 transition-all">
+                                        <p class="text-slate-900 text-xl font-medium leading-relaxed"><strong class="font-black">${item.n}.</strong> ${item.text}</p>
+                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            ${item.opts.map((opt, idx) => `
+                                                <label class="flex items-center p-4 rounded-2xl border-2 border-slate-300 bg-white hover:bg-emerald-50 cursor-pointer transition shadow-sm">
+                                                    <input type="radio" name="q${item.n}" value="${String.fromCharCode(65+idx)}" class="w-5 h-5 text-emerald-600">
+                                                    <span class="ml-3 text-slate-800 text-lg font-medium">${opt}</span>
+                                                </label>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `);
+                            });
+                        </script>
+                    </div>
+                </div>
+
+                <!-- Q36 - Q40 -->
+                <div class="bg-white rounded-3xl p-8 shadow-md border-2 border-slate-200 space-y-6">
+                    <h3 class="text-2xl font-bold text-slate-900">第三十六到四十题：连词成句 (点击词语排列成正确句子)</h3>
+                    <p class="text-base text-slate-600 font-normal">点击下方打乱的词语将它们放入答题框中，点击答题框中的词语可退回。组成完整的句子。</p>
+                    
+                    <div class="space-y-6">
+                        <script>
+                            const sentenceQuestions = [
+                                {n: 36, words: ["面包", "一个", "商店里", "没有", "也"], correct: "商店里一个面包也没有。"},
+                                {n: 37, words: ["想", "好", "吃什么", "还没", "我"], correct: "我还没想好吃什么。"},
+                                {n: 38, words: ["没下", "雪", "一点儿", "都", "今年"], correct: "今年一点儿雪都没下。"},
+                                {n: 39, words: ["也", "咖啡", "一杯", "没喝", "今天下午", "我"], correct: "我今天下午一杯咖啡也没喝。"},
+                                {n: 40, words: ["好", "水果", "吗", "洗", "你", "了"], correct: "你洗好水果了吗？"}
+                            ];
+
+                            sentenceQuestions.forEach(item => {
+                                document.write(`
+                                    <div id="q-container-${item.n}" class="p-6 bg-slate-50 border-2 border-slate-200 rounded-2xl space-y-4 transition-all">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-slate-900 text-xl font-bold">${item.n}. 连词成句</span>
+                                            <button type="button" onclick="resetSentence(${item.n})" class="text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-xl border border-rose-200 transition cursor-pointer">重置 (Làm lại)</button>
+                                        </div>
+                                        
+                                        <div class="space-y-1.5">
+                                            <label class="block text-sm font-bold text-slate-600">您的句子 (Câu của bạn):</label>
+                                            <div id="sentence-target-${item.n}" class="min-h-[56px] p-3 bg-white border-2 border-dashed border-indigo-300 rounded-2xl flex flex-wrap items-center gap-2">
+                                                <span class="text-slate-400 text-sm italic pointer-events-none select-none font-normal">点击下方词语按顺序排列在这里...</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="space-y-1.5">
+                                            <label class="block text-sm font-bold text-slate-600">可选词语 (Kho từ vựng):</label>
+                                            <div id="sentence-pool-${item.n}" class="flex flex-wrap gap-2.5">
+                                                ${item.words.map((w, idx) => `
+                                                    <button type="button" onclick="moveWord(${item.n}, '${w}', this)" class="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-900 font-bold text-lg rounded-xl border border-indigo-200 transition shadow-sm cursor-pointer select-none">
+                                                        ${w}
+                                                    </button>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `);
+                            });
+                        </script>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Submit Button -->
+            <div class="pt-8 text-center pb-16">
+                <button type="button" onclick="confirmSubmit()" class="w-full sm:w-auto px-16 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-5 rounded-3xl shadow-2xl transition duration-200 text-2xl cursor-pointer">
+                    📤 提交试卷并评分 (Nộp bài thi)
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL -->
+    <div id="custom-modal" class="hidden fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl text-center space-y-6 border border-slate-100">
+            <h3 id="modal-title" class="text-2xl font-black text-slate-900">提示</h3>
+            <p id="modal-message" class="text-slate-700 text-lg leading-relaxed font-normal"></p>
+            <div id="modal-buttons" class="flex gap-4 pt-2"></div>
+        </div>
+    </div>
+
+    <script>
+        let timerInterval;
+        let savedStudentName = '';
+        let timeLeft = 40 * 60;
+
+        let sentenceAnswers = {
+            36: [], 37: [], 38: [], 39: [], 40: []
+        };
+
+        const originalPools = {
+            36: ["面包", "一个", "商店里", "没有", "也"],
+            37: ["想", "好", "吃什么", "还没", "我"],
+            38: ["没下", "雪", "一点儿", "都", "今年"],
+            39: ["也", "咖啡", "一杯", "没喝", "今天下午", "我"],
+            40: ["好", "水果", "吗", "洗", "你", "了"]
+        };
+
+        const answerKey = {
+            q1: 'F', q2: 'A', q3: 'E', q4: 'B', q5: 'C',
+            q6: 'T', q7: 'F', q8: 'F', q9: 'T', q10: 'F',
+            q11: 'A', q12: 'C', q13: 'B', q14: 'B', q15: 'C',
+            q16: 'B', q17: 'C', q18: 'A', q19: 'C', q20: 'A',
+            q21: 'F', q22: 'C', q23: 'D', q24: 'A', q25: 'B',
+            q26: 'A', q27: 'D', q28: 'F', q29: 'B', q30: 'C',
+            q31: 'A', q32: 'B', q33: 'A', q34: 'C', q35: 'B',
+            q36: '商店里一个面包也没有。',
+            q37: '我还没想好吃什么。',
+            q38: '今年一点儿雪都没下。',
+            q39: '我今天下午一杯咖啡也没喝。',
+            q40: '你洗好水果了吗？'
+        };
+
+        function moveWord(qNum, word, btnElem) {
+            sentenceAnswers[qNum].push(word);
+            btnElem.remove();
+            renderSentence(qNum);
+        }
+
+        function returnWord(qNum, word, index) {
+            sentenceAnswers[qNum].splice(index, 1);
+            renderSentence(qNum);
+            renderPool(qNum);
+        }
+
+        function resetSentence(qNum) {
+            sentenceAnswers[qNum] = [];
+            renderSentence(qNum);
+            renderPool(qNum);
+        }
+
+        function renderSentence(qNum) {
+            const target = document.getElementById(`sentence-target-${qNum}`);
+            if (!target) return;
+            if (sentenceAnswers[qNum].length === 0) {
+                target.innerHTML = `<span class="text-slate-400 text-sm italic pointer-events-none select-none font-normal">点击下方词语按顺序排列在这里...</span>`;
+                return;
+            }
+            target.innerHTML = sentenceAnswers[qNum].map((w, idx) => `
+                <button type="button" onclick="returnWord(${qNum}, '${w}', ${idx})" class="px-4 py-2.5 bg-indigo-600 hover:bg-rose-600 text-white font-bold text-lg rounded-xl transition shadow-sm cursor-pointer select-none">
+                    ${w} ✕
+                </button>
+            `).join('');
+        }
+
+        function renderPool(qNum) {
+            const pool = document.getElementById(`sentence-pool-${qNum}`);
+            if (!pool) return;
+            const used = sentenceAnswers[qNum];
+            const original = originalPools[qNum];
+            let currentPool = [...original];
+            used.forEach(w => {
+                const i = currentPool.indexOf(w);
+                if (i !== -1) currentPool.splice(i, 1);
+            });
+
+            pool.innerHTML = currentPool.map(w => `
+                <button type="button" onclick="moveWord(${qNum}, '${w}', this)" class="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-900 font-bold text-lg rounded-xl border border-indigo-200 transition shadow-sm cursor-pointer select-none">
+                    ${w}
+                </button>
+            `).join('');
+        }
+
+        function startExam() {
+            const nameInput = document.getElementById('student-name');
+            const nameError = document.getElementById('name-error');
+            const studentName = nameInput.value.trim();
+
+            if (!studentName) {
+                nameError.classList.remove('hidden');
+                nameInput.focus();
+                return;
+            }
+
+            savedStudentName = studentName;
+            nameError.classList.add('hidden');
+            
+            document.getElementById('display-name').innerText = `考生: ${studentName}`;
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('exam-screen').classList.remove('hidden');
+
+            startTimer();
+        }
+
+        function startTimer() {
+            const timerDisplay = document.getElementById('time-left');
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    autoSubmitExam();
+                    return;
+                }
+                timeLeft--;
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                timerDisplay.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function showCustomModal(title, message, buttonsHtml) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('modal-buttons').innerHTML = buttonsHtml;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function closeCustomModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+        }
+
+        function confirmSubmit() {
+            let answeredCount = 0;
+            for (let i = 1; i <= 35; i++) {
+                if (document.querySelector(`input[name="q${i}"]:checked`)) {
+                    answeredCount++;
+                }
+            }
+            for (let i = 36; i <= 40; i++) {
+                if (sentenceAnswers[i].length > 0) {
+                    answeredCount++;
+                }
+            }
+            
+            showCustomModal(
+                "确认交卷 (Xác nhận nộp bài)",
+                `您已回答 ${answeredCount} / 40 道题。确定现在提交试卷并查看评分吗？`,
+                `
+                    <button type="button" onclick="closeCustomModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 py-4 rounded-2xl font-bold transition cursor-pointer text-lg">继续答题</button>
+                    <button type="button" onclick="closeCustomModal(); submitExamProcess();" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold transition shadow-lg cursor-pointer text-lg">确认交卷</button>
+                `
+            );
+        }
+
+        function autoSubmitExam() {
+            showCustomModal(
+                "时间到 (Hết giờ làm bài)",
+                "⏰ 考试时间已到！系统已自动提交您的试卷并显示评分。",
+                `<button type="button" onclick="closeCustomModal(); submitExamProcess();" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition shadow-lg cursor-pointer text-lg">查看批改结果</button>`
+            );
+        }
+
+        async function submitExamProcess() {
+            if (timerInterval) clearInterval(timerInterval);
+
+            let correctCount = 0;
+            let detailsArray = [];
+
+            for (let i = 1; i <= 35; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                const userChoice = selected ? selected.value : null;
+                const correctChoice = answerKey[`q${i}`];
+                const container = document.getElementById(`q-container-${i}`);
+
+                const radios = document.querySelectorAll(`input[name="q${i}"]`);
+                radios.forEach(r => r.disabled = true);
+
+                if (container) {
+                    if (userChoice === correctChoice) {
+                        correctCount++;
+                        container.classList.remove('bg-slate-50', 'border-slate-200');
+                        container.classList.add('bg-emerald-50', 'border-emerald-500', 'shadow-md');
+                        container.insertAdjacentHTML('beforeend', `<div class="mt-2 text-emerald-700 font-bold text-base flex items-center gap-1.5">✅ 回答正确 (Đúng) - 正确答案: ${correctChoice}</div>`);
+                        detailsArray.push(`Q${i}:${userChoice}(Đ)`);
+                    } else {
+                        container.classList.remove('bg-slate-50', 'border-slate-200');
+                        container.classList.add('bg-rose-50', 'border-rose-500', 'shadow-md');
+                        const wrongText = userChoice ? `您选了: ${userChoice}` : '未作答 (Bỏ trống)';
+                        container.insertAdjacentHTML('beforeend', `<div class="mt-2 text-rose-700 font-bold text-base flex items-center gap-1.5">❌ ${wrongText} | 正确答案 (Đáp án đúng): <span class="text-emerald-700 font-bold underline">${correctChoice}</span></div>`);
+                        detailsArray.push(`Q${i}:${userChoice || 'Bỏ trống'}(S->${correctChoice})`);
+                    }
+                }
+            }
+
+            for (let i = 36; i <= 40; i++) {
+                const container = document.getElementById(`q-container-${i}`);
+                const userSentence = sentenceAnswers[i].join('');
+                const correctSentence = answerKey[`q${i}`];
+                const cleanUser = userSentence.replace(/[。？！，]/g, '');
+                const cleanCorrect = correctSentence.replace(/[。？！，]/g, '');
+
+                if (container) {
+                    if (cleanUser === cleanCorrect) {
+                        correctCount++;
+                        container.classList.remove('bg-slate-50', 'border-slate-200');
+                        container.classList.add('bg-emerald-50', 'border-emerald-500', 'shadow-md');
+                        container.insertAdjacentHTML('beforeend', `<div class="mt-2 text-emerald-700 font-bold text-base flex items-center gap-1.5">✅ 回答正确 (Đúng) - ${correctSentence}</div>`);
+                        detailsArray.push(`Q${i}:${userSentence}(Đ)`);
+                    } else {
+                        container.classList.remove('bg-slate-50', 'border-slate-200');
+                        container.classList.add('bg-rose-50', 'border-rose-500', 'shadow-md');
+                        const wrongText = userSentence ? `您的句子: ${userSentence}` : '未作答 (Bỏ trống)';
+                        container.insertAdjacentHTML('beforeend', `<div class="mt-2 text-rose-700 font-bold text-base flex items-center gap-1.5">❌ ${wrongText} | 正确答案: <span class="text-emerald-700 font-bold underline">${correctSentence}</span></div>`);
+                        detailsArray.push(`Q${i}:${userSentence || 'Bỏ trống'}(S->${correctSentence})`);
+                    }
+                }
+            }
+
+            const totalScore = correctCount * 5;
+            const detailString = detailsArray.join(', ');
+            const nameToSubmit = savedStudentName || 'Học viên ẩn danh';
+
+            document.getElementById('banner-student').innerText = `考生 (Học viên): ${nameToSubmit}`;
+            document.getElementById('banner-correct').innerText = `${correctCount} / 40`;
+            document.getElementById('banner-score').innerText = `${totalScore} / 200`;
+            document.getElementById('score-banner').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            const sheetDbUrl = 'https://script.google.com/macros/s/AKfycbxKihg1mU16-XpzYGwYh3QPEgI_pjayvtHvvjg-wE7si1o-F4_a3fV2QMX2fjklZgwe/exec';
+            if (sheetDbUrl) {
+                try {
+                    await fetch(sheetDbUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            data: [
+                                {
+                                    "Thời gian": new Date().toLocaleString(),
+                                    "Họ tên": nameToSubmit,
+                                    "Điểm số": totalScore,
+                                    "Chi tiết": detailString
+                                }
+                            ]
+                        })
+                    });
+                    console.log('Google Sheets synced successfully');
+                } catch (err) {
+                    console.error('Google Sheets sync error:', err);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
